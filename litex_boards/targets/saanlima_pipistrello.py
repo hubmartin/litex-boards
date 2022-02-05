@@ -159,8 +159,7 @@ class BaseSoC(SoCCore):
 
         # SoCCore ----------------------------------------------------------------------------------
         SoCCore.__init__(self, platform, sys_clk_freq,
-            ident          = "LiteX SoC on Pipistrello",
-            ident_version  = True,
+            ident = "LiteX SoC on Pipistrello",
             **kwargs)
 
         # CRG --------------------------------------------------------------------------------------
@@ -194,8 +193,8 @@ class BaseSoC(SoCCore):
 
 def main():
     parser = argparse.ArgumentParser(description="LiteX SoC on Pipistrello")
-    parser.add_argument("--build",        action="store_true", help="Build bitstream")
-    parser.add_argument("--load",         action="store_true", help="Load bitstream")
+    parser.add_argument("--build",        action="store_true", help="Build bitstream.")
+    parser.add_argument("--load",         action="store_true", help="Load bitstream.")
     builder_args(parser)
     soc_core_args(parser)
     args = parser.parse_args()

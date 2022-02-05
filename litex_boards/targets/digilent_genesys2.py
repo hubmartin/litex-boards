@@ -53,8 +53,7 @@ class BaseSoC(SoCCore):
 
         # SoCCore ----------------------------------------------------------------------------------
         SoCCore.__init__(self, platform, sys_clk_freq,
-            ident          = "LiteX SoC on Genesys2",
-            ident_version  = True,
+            ident = "LiteX SoC on Genesys2",
             **kwargs)
 
         # CRG --------------------------------------------------------------------------------------
@@ -92,15 +91,15 @@ class BaseSoC(SoCCore):
 
 def main():
     parser = argparse.ArgumentParser(description="LiteX SoC on Genesys2")
-    parser.add_argument("--build",           action="store_true", help="Build bitstream")
-    parser.add_argument("--load",            action="store_true", help="Load bitstream")
-    parser.add_argument("--sys-clk-freq",    default=100e6,       help="System clock frequency (default: 100MHz)")
+    parser.add_argument("--build",           action="store_true", help="Build bitstream.")
+    parser.add_argument("--load",            action="store_true", help="Load bitstream.")
+    parser.add_argument("--sys-clk-freq",    default=100e6,       help="System clock frequency.")
     ethopts = parser.add_mutually_exclusive_group()
-    ethopts.add_argument("--with-ethernet",  action="store_true", help="Enable Ethernet support")
-    ethopts.add_argument("--with-etherbone", action="store_true", help="Enable Etherbone support")
+    ethopts.add_argument("--with-ethernet",  action="store_true", help="Enable Ethernet support.")
+    ethopts.add_argument("--with-etherbone", action="store_true", help="Enable Etherbone support.")
     sdopts = parser.add_mutually_exclusive_group()
-    sdopts.add_argument("--with-spi-sdcard", action="store_true", help="Enable SPI-mode SDCard support")
-    sdopts.add_argument("--with-sdcard",     action="store_true", help="Enable SDCard support")
+    sdopts.add_argument("--with-spi-sdcard", action="store_true", help="Enable SPI-mode SDCard support.")
+    sdopts.add_argument("--with-sdcard",     action="store_true", help="Enable SDCard support.")
     builder_args(parser)
     soc_core_args(parser)
     args = parser.parse_args()

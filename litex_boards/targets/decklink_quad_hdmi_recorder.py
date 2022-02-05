@@ -11,7 +11,7 @@
 #
 # Use:
 # litex_server --jtag --jtag-config=openocd_xc7_ft232.cfg
-# litex_term bridge
+# litex_term crossover
 
 import os
 import argparse
@@ -65,8 +65,7 @@ class BaseSoC(SoCCore):
         # SoCCore ----------------------------------------------------------------------------------
         kwargs["uart_name"] = "crossover"
         SoCCore.__init__(self, platform, sys_clk_freq,
-            ident          = "LiteX SoC on Blackmagic Decklink Quad HDMI Recorder",
-            ident_version  = True,
+            ident = "LiteX SoC on Blackmagic Decklink Quad HDMI Recorder",
             **kwargs)
 
         # CRG --------------------------------------------------------------------------------------
@@ -103,11 +102,11 @@ class BaseSoC(SoCCore):
 
 def main():
     parser = argparse.ArgumentParser(description="LiteX SoC on Blackmagic Decklink Quad HDMI Recorder")
-    parser.add_argument("--build",        action="store_true", help="Build bitstream")
-    parser.add_argument("--load",         action="store_true", help="Load bitstream")
-    parser.add_argument("--sys-clk-freq", default=200e6,       help="System clock frequency (default: 200MHz)")
-    parser.add_argument("--with-pcie",    action="store_true", help="Enable PCIe support")
-    parser.add_argument("--driver",       action="store_true", help="Generate PCIe driver")
+    parser.add_argument("--build",        action="store_true", help="Build bitstream.")
+    parser.add_argument("--load",         action="store_true", help="Load bitstream.")
+    parser.add_argument("--sys-clk-freq", default=200e6,       help="System clock frequency.")
+    parser.add_argument("--with-pcie",    action="store_true", help="Enable PCIe support.")
+    parser.add_argument("--driver",       action="store_true", help="Generate PCIe driver.")
     builder_args(parser)
     soc_core_args(parser)
     args = parser.parse_args()

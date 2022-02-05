@@ -70,8 +70,7 @@ class BaseSoC(SoCCore):
         if kwargs["uart_name"] == "serial":
             kwargs["uart_name"] = "crossover"
         SoCCore.__init__(self, platform, sys_clk_freq,
-            ident          = "LiteX SoC on Fairwaves XTRX",
-            ident_version  = True,
+            ident = "LiteX SoC on Fairwaves XTRX",
             **kwargs)
 
         # CRG --------------------------------------------------------------------------------------
@@ -90,7 +89,7 @@ class BaseSoC(SoCCore):
             self.icap.add_reload()
             self.icap.add_timing_constraints(platform, sys_clk_freq, self.crg.cd_sys.clk)
 
-            # Flash (For SPIFlash update over PCIe). FIXME: Should probably be updated to use SpiFlashSingle/SpiFlashDualQuad (so MMAPed and do the update with bit-banging)
+            # Flash (For SPIFlash update over PCIe).
             from litex.soc.cores.gpio import GPIOOut
             from litex.soc.cores.spi_flash import S7SPIFlash
             self.submodules.flash_cs_n = GPIOOut(platform.request("flash_cs_n"))
@@ -107,12 +106,12 @@ class BaseSoC(SoCCore):
 
 def main():
     parser = argparse.ArgumentParser(description="LiteX SoC on Fairwaves XTRX")
-    parser.add_argument("--build",           action="store_true", help="Build bitstream")
-    parser.add_argument("--load",            action="store_true", help="Load bitstream")
-    parser.add_argument("--flash",           action="store_true", help="Flash bitstream")
-    parser.add_argument("--sys-clk-freq",    default=125e6,       help="System clock frequency (default: 125MHz)")
-    parser.add_argument("--with-pcie",       action="store_true", help="Enable PCIe support")
-    parser.add_argument("--driver",          action="store_true", help="Generate PCIe driver")
+    parser.add_argument("--build",           action="store_true", help="Build bitstream.")
+    parser.add_argument("--load",            action="store_true", help="Load bitstream.")
+    parser.add_argument("--flash",           action="store_true", help="Flash bitstream.")
+    parser.add_argument("--sys-clk-freq",    default=125e6,       help="System clock frequency.")
+    parser.add_argument("--with-pcie",       action="store_true", help="Enable PCIe support.")
+    parser.add_argument("--driver",          action="store_true", help="Generate PCIe driver.")
     builder_args(parser)
     soc_core_args(parser)
     args = parser.parse_args()

@@ -109,21 +109,17 @@ def addAsyncSram(soc, platform, name, origin, size):
 
 class BaseSoC(SoCCore):
     def __init__(self, 
-                 variant="a7-35", 
-                 toolchain="vivado", 
-                 sys_clk_freq=int(100e6),
-                 with_led_chaser=True,
-                 ident_version=True, 
-                 with_jtagbone=True, 
-                 with_mapped_flash=False, 
-                 **kwargs):
+        variant         = "a7-35",
+        toolchain       = "vivado",
+        sys_clk_freq    = int(100e6),
+        with_led_chaser = True,
+        **kwargs):
 
         platform = micronova_mercury2.Platform()
 
         # SoCCore ----------------------------------------------------------------------------------
         SoCCore.__init__(self, platform, sys_clk_freq,
-            ident          = "LiteX SoC on MicroNova Mercury2",
-            ident_version  = True,
+            ident = "LiteX SoC on MicroNova Mercury2",
             **kwargs)
 
         # CRG --------------------------------------------------------------------------------------
@@ -144,11 +140,11 @@ class BaseSoC(SoCCore):
 
 def main():
     parser = argparse.ArgumentParser(description="LiteX SoC on MicroNova Mercury2")
-    parser.add_argument("--toolchain",           default="vivado",                 help="Toolchain use to build (default: vivado)")
-    parser.add_argument("--build",               action="store_true",              help="Build bitstream")
-    parser.add_argument("--load",                action="store_true",              help="Load bitstream")
-    parser.add_argument("--variant",             default="a7-35",                  help="Board variant: a7-35 (default) or a7-100")
-    parser.add_argument("--sys-clk-freq",        default=50e6,                    help="System clock frequency (default: 50MHz)")
+    parser.add_argument("--toolchain",    default="vivado",    help="FPGA toolchain (vivado or symbiflow).")
+    parser.add_argument("--build",        action="store_true", help="Build bitstream.")
+    parser.add_argument("--load",         action="store_true", help="Load bitstream.")
+    parser.add_argument("--variant",      default="a7-35",     help="Board variant (a7-35 or a7-100).")
+    parser.add_argument("--sys-clk-freq", default=50e6,        help="System clock frequency.")
 
     builder_args(parser)
     soc_core_args(parser)

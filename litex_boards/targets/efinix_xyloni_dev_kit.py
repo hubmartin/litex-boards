@@ -44,22 +44,19 @@ class _CRG(Module):
 # BaseSoC ------------------------------------------------------------------------------------------
 
 class BaseSoC(SoCCore):
-    mem_map = {**SoCCore.mem_map, **{"spiflash": 0x80000000}}
     def __init__(self, bios_flash_offset, sys_clk_freq, with_led_chaser=True, **kwargs):
         platform = efinix_xyloni_dev_kit.Platform()
 
-        # Disable Integrated ROM since too large for this device.
+        # Disable Integrated ROM.
         kwargs["integrated_rom_size"]  = 0
 
         # Set CPU variant / reset address
         if kwargs.get("cpu_type", "vexriscv") == "vexriscv":
             kwargs["cpu_variant"] = "minimal"
-        kwargs["cpu_reset_address"] = self.mem_map["spiflash"] + bios_flash_offset
 
         # SoCCore ----------------------------------------------------------------------------------
         SoCCore.__init__(self, platform, sys_clk_freq,
-            ident         = "LiteX SoC on Efinix Xyloni Dev Kit",
-            ident_version = True,
+            ident = "LiteX SoC on Efinix Xyloni Dev Kit",
             **kwargs)
 
         # CRG --------------------------------------------------------------------------------------
@@ -72,10 +69,11 @@ class BaseSoC(SoCCore):
 
         # Add ROM linker region --------------------------------------------------------------------
         self.bus.add_region("rom", SoCRegion(
-            origin = self.mem_map["spiflash"] + bios_flash_offset,
+            origin = self.bus.regions["spiflash"].origin + bios_flash_offset,
             size   = 32*kB,
             linker = True)
         )
+        self.cpu.set_reset_address(self.bus.regions["rom"].origin)
 
         # Leds -------------------------------------------------------------------------------------
         if with_led_chaser:
@@ -88,18 +86,18 @@ class BaseSoC(SoCCore):
 
 def main():
     parser = argparse.ArgumentParser(description="LiteX SoC on Efinix Xyloni Dev Kit")
-    parser.add_argument("--build", action="store_true", help="Build bitstream")
-    parser.add_argument("--load",  action="store_true", help="Load bitstream")
-    parser.add_argument("--flash", action="store_true", help="Flash Bitstream")
-    parser.add_argument("--sys-clk-freq",      default=33.333e6, help="System clock frequency (default: 33.333MHz)")
-    parser.add_argument("--bios-flash-offset", default=0x40000,  help="BIOS offset in SPI Flash (default: 0x40000)")
+    parser.add_argument("--build", action="store_true",           help="Build bitstream.")
+    parser.add_argument("--load",  action="store_true",           help="Load bitstream.")
+    parser.add_argument("--flash", action="store_true",           help="Flash Bitstream.")
+    parser.add_argument("--sys-clk-freq",      default=33.333e6,  help="System clock frequency.")
+    parser.add_argument("--bios-flash-offset", default="0x40000", help="BIOS offset in SPI Flash.")
 
     builder_args(parser)
     soc_core_args(parser)
     args = parser.parse_args()
 
     soc = BaseSoC(
-        bios_flash_offset = args.bios_flash_offset,
+        bios_flash_offset = int(args.bios_flash_offset, 0),
         sys_clk_freq      = int(float(args.sys_clk_freq)),
         **soc_core_argdict(args))
     builder = Builder(soc, **builder_argdict(args))

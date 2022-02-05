@@ -40,12 +40,12 @@ class BaseSoC(SoCCore):
 
 
         # Disable CPU for now.
-        kwargs["cpu_type"]  = None
+        kwargs["cpu_type"] = None
+        kwargs["integrated_sram_size"] = 0
 
         # SoCCore ----------------------------------------------------------------------------------
         SoCCore.__init__(self, platform, sys_clk_freq,
-            ident         = "LiteX SoC on Runber",
-            ident_version = True,
+            ident = "LiteX SoC on Runber",
             **kwargs)
 
         # CRG --------------------------------------------------------------------------------------
@@ -61,10 +61,10 @@ class BaseSoC(SoCCore):
 
 def main():
     parser = argparse.ArgumentParser(description="LiteX SoC on Runber")
-    parser.add_argument("--build",       action="store_true", help="Build bitstream")
-    parser.add_argument("--load",        action="store_true", help="Load bitstream")
-    parser.add_argument("--flash",       action="store_true", help="Flash Bitstream")
-    parser.add_argument("--sys-clk-freq",default=12e6,        help="System clock frequency (default: 12MHz)")
+    parser.add_argument("--build",       action="store_true", help="Build bitstream.")
+    parser.add_argument("--load",        action="store_true", help="Load bitstream.")
+    parser.add_argument("--flash",       action="store_true", help="Flash Bitstream.")
+    parser.add_argument("--sys-clk-freq",default=12e6,        help="System clock frequency.")
     builder_args(parser)
     soc_core_args(parser)
     args = parser.parse_args()

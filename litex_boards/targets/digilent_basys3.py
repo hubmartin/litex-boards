@@ -45,8 +45,7 @@ class BaseSoC(SoCCore):
 
         # SoCCore ----------------------------------_-----------------------------------------------
         SoCCore.__init__(self, platform, sys_clk_freq,
-            ident          = "LiteX SoC on Basys3",
-            ident_version  = True,
+            ident = "LiteX SoC on Basys3",
             **kwargs)
 
         # CRG --------------------------------------------------------------------------------------
@@ -67,15 +66,15 @@ class BaseSoC(SoCCore):
 # Build --------------------------------------------------------------------------------------------  
 def main():
     parser = argparse.ArgumentParser(description="LiteX SoC on Basys3")
-    parser.add_argument("--build",               action="store_true", help="Build bitstream")
-    parser.add_argument("--load",                action="store_true", help="Load bitstream")
-    parser.add_argument("--sys-clk-freq",        default=75e6,        help="System clock frequency (default: 75MHz)")
+    parser.add_argument("--build",               action="store_true", help="Build bitstream.")
+    parser.add_argument("--load",                action="store_true", help="Load bitstream.")
+    parser.add_argument("--sys-clk-freq",        default=75e6,        help="System clock frequency.")
     sdopts = parser.add_mutually_exclusive_group()
-    sdopts.add_argument("--with-spi-sdcard",     action="store_true", help="Enable SPI-mode SDCard support")
-    sdopts.add_argument("--with-sdcard",         action="store_true", help="Enable SDCard support")
-    parser.add_argument("--sdcard-adapter",      type=str,            help="SDCard PMOD adapter: digilent (default) or numato")
+    sdopts.add_argument("--with-spi-sdcard",     action="store_true", help="Enable SPI-mode SDCard support.")
+    sdopts.add_argument("--with-sdcard",         action="store_true", help="Enable SDCard support.")
+    parser.add_argument("--sdcard-adapter",      type=str,            help="SDCard PMOD adapter (digilent or numato).")
     viopts = parser.add_mutually_exclusive_group()
-    viopts.add_argument("--with-video-terminal", action="store_true", help="Enable Video Terminal (VGA)")
+    viopts.add_argument("--with-video-terminal", action="store_true", help="Enable Video Terminal (VGA).")
     builder_args(parser)
     soc_core_args(parser)
     args = parser.parse_args()

@@ -74,8 +74,7 @@ class BaseSoC(SoCCore):
 
         # SoCCore ----------------------------------------------------------------------------------
         SoCCore.__init__(self, platform, sys_clk_freq,
-            ident          = "LiteX SoC on MiniSpartan6",
-            ident_version  = True,
+            ident = "LiteX SoC on MiniSpartan6",
             **kwargs)
 
         # CRG --------------------------------------------------------------------------------------
@@ -86,10 +85,9 @@ class BaseSoC(SoCCore):
             sdrphy_cls = HalfRateGENSDRPHY if sdram_rate == "1:2" else GENSDRPHY
             self.submodules.sdrphy = sdrphy_cls(platform.request("sdram"), sys_clk_freq)
             self.add_sdram("sdram",
-                phy              = self.sdrphy,
-                module           = AS4C16M16(sys_clk_freq, sdram_rate),
-                l2_cache_size    = kwargs.get("l2_size", 8192),
-                l2_cache_reverse = False
+                phy           = self.sdrphy,
+                module        = AS4C16M16(sys_clk_freq, sdram_rate),
+                l2_cache_size = kwargs.get("l2_size", 8192)
             )
 
         # Video ------------------------------------------------------------------------------------
@@ -110,13 +108,13 @@ class BaseSoC(SoCCore):
 
 def main():
     parser = argparse.ArgumentParser(description="LiteX SoC on MiniSpartan6")
-    parser.add_argument("--build",                  action="store_true", help="Build bitstream")
-    parser.add_argument("--load",                   action="store_true", help="Load bitstream")
-    parser.add_argument("--sys-clk-freq",           default=80e6,        help="System clock frequency (default: 80MHz)")
-    parser.add_argument("--sdram-rate",             default="1:1",       help="SDRAM Rate: 1:1 Full Rate (default) or 1:2 Half Rate")
+    parser.add_argument("--build",                  action="store_true", help="Build bitstream.")
+    parser.add_argument("--load",                   action="store_true", help="Load bitstream.")
+    parser.add_argument("--sys-clk-freq",           default=80e6,        help="System clock frequency.")
+    parser.add_argument("--sdram-rate",             default="1:1",       help="SDRAM Rate (1:1 Full Rate or 1:2 Half Rate).")
     viopts = parser.add_mutually_exclusive_group()
-    viopts.add_argument("--with-video-terminal",    action="store_true", help="Enable Video Terminal (HDMI)")
-    viopts.add_argument("--with-video-framebuffer", action="store_true", help="Enable Video Framebuffer (HDMI)")
+    viopts.add_argument("--with-video-terminal",    action="store_true", help="Enable Video Terminal (HDMI).")
+    viopts.add_argument("--with-video-framebuffer", action="store_true", help="Enable Video Framebuffer (HDMI).")
     builder_args(parser)
     soc_core_args(parser)
     args = parser.parse_args()

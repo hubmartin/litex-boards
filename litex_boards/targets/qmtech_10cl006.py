@@ -67,7 +67,7 @@ class BaseSoC(SoCCore):
     def __init__(self, sys_clk_freq=int(50e6), with_daughterboard=False,
                  with_ethernet=False, with_etherbone=False, eth_ip="192.168.1.50", eth_dynamic_ip=False,
                  with_led_chaser=True, with_video_terminal=False, with_video_framebuffer=False,
-                 ident_version=True, sdram_rate="1:1", **kwargs):
+                 sdram_rate="1:1", **kwargs):
         platform = qmtech_10cl006.Platform(with_daughterboard=with_daughterboard)
 
         # unfornunately not even SERV would fit the devices
@@ -79,14 +79,11 @@ class BaseSoC(SoCCore):
 
         # SoCCore ----------------------------------------------------------------------------------
         SoCCore.__init__(self, platform, sys_clk_freq,
-            ident          = "LiteX SoC on QMTECH 10CL006" + (" + Daughterboard" if with_daughterboard else ""),
-            ident_version  = ident_version,
+            ident = "LiteX SoC on QMTECH 10CL006" + (" + Daughterboard" if with_daughterboard else ""),
             **kwargs)
 
         # CRG --------------------------------------------------------------------------------------
-        self.submodules.crg = _CRG(platform,
-                                   sys_clk_freq,
-                                   sdram_rate=sdram_rate)
+        self.submodules.crg = _CRG(platform, sys_clk_freq, sdram_rate=sdram_rate)
 
         # SDR SDRAM --------------------------------------------------------------------------------
         if not self.integrated_main_ram_size:
@@ -108,17 +105,15 @@ class BaseSoC(SoCCore):
 
 def main():
     parser = argparse.ArgumentParser(description="LiteX SoC on QMTECH 10CL006")
-    parser.add_argument("--build",        action="store_true", help="Build bitstream")
-    parser.add_argument("--load",         action="store_true", help="Load bitstream")
-    parser.add_argument("--sys-clk-freq", default=50e6,        help="System clock frequency (default: 50MHz)")
-    parser.add_argument("--sdram-rate",   default="1:2",       help="SDRAM Rate: 1:1 Full Rate (default) or 1:2 Half Rate")
-    parser.add_argument("--with-daughterboard",  action="store_true",              help="Whether the core board is plugged into the QMTech daughterboard")
+    parser.add_argument("--build",               action="store_true", help="Build bitstream.")
+    parser.add_argument("--load",                action="store_true", help="Load bitstream.")
+    parser.add_argument("--sys-clk-freq",        default=50e6,        help="System clock frequency.")
+    parser.add_argument("--sdram-rate",          default="1:2",       help="SDRAM Rate (1:1 Full Rate or 1:2 Half Rate).")
+    parser.add_argument("--with-daughterboard",  action="store_true", help="Board plugged into the QMTech daughterboard.")
     sdopts = parser.add_mutually_exclusive_group()
-    sdopts.add_argument("--with-spi-sdcard",     action="store_true",              help="Enable SPI-mode SDCard support")
-    sdopts.add_argument("--with-sdcard",         action="store_true",              help="Enable SDCard support")
-    parser.add_argument("--with-spi-flash",      action="store_true",              help="Enable SPI Flash (MMAPed)")
-    parser.add_argument("--no-ident-version",    action="store_false",             help="Disable build time output")
-
+    sdopts.add_argument("--with-spi-sdcard",     action="store_true", help="Enable SPI-mode SDCard support.")
+    sdopts.add_argument("--with-sdcard",         action="store_true", help="Enable SDCard support.")
+    parser.add_argument("--with-spi-flash",      action="store_true", help="Enable SPI Flash (MMAPed).")
     builder_args(parser)
     soc_core_args(parser)
     args = parser.parse_args()
@@ -126,7 +121,6 @@ def main():
     soc = BaseSoC(
         sys_clk_freq = int(float(args.sys_clk_freq)),
         with_daughterboard     = args.with_daughterboard,
-        ident_version          = args.no_ident_version,
         with_spi_flash         = args.with_spi_flash,
         sdram_rate             = args.sdram_rate,
         **soc_core_argdict(args)

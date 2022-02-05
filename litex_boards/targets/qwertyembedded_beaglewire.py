@@ -21,7 +21,6 @@ from litex.soc.cores.clock import iCE40PLL
 from litex.soc.integration.soc_core import *
 from litex.soc.integration.soc import SoCRegion
 from litex.soc.integration.builder import *
-from litex.soc.cores.spi_flash import SpiFlash
 from litex.soc.cores.led import LedChaser
 from litex.soc.cores.uart import UARTWishboneBridge
 
@@ -66,7 +65,6 @@ class _CRG(Module):
 # BaseSoC ------------------------------------------------------------------------------------------
 
 class BaseSoC(SoCCore):
-    mem_map = {**SoCCore.mem_map, **{"spiflash": 0x80000000}}
     def __init__(self, bios_flash_offset, sys_clk_freq=int(50e6), **kwargs):
         platform = beaglewire.Platform()
 
@@ -74,13 +72,9 @@ class BaseSoC(SoCCore):
         kwargs["integrated_rom_size"]  = 0
         kwargs["integrated_sram_size"] = 2*kB
 
-        # Set CPU reset address
-        kwargs["cpu_reset_address"] = self.mem_map["spiflash"] + bios_flash_offset
-
         # SoCCore ----------------------------------------------------------------------------------
-        SoCCore.__init__(self, platform, sys_clk_freq, 
-            ident          = "LiteX SoC on Beaglewire",
-            ident_version  = True,
+        SoCCore.__init__(self, platform, sys_clk_freq,
+            ident = "LiteX SoC on Beaglewire",
             **kwargs)
 
         # CRG --------------------------------------------------------------------------------------
@@ -96,14 +90,17 @@ class BaseSoC(SoCCore):
             )
 
         # SPI Flash --------------------------------------------------------------------------------
-        self.add_spi_flash(mode="1x", dummy_cycles=8)
+        from litespi.modules import M25PX32
+        from litespi.opcodes import SpiNorFlashOpCodes as Codes
+        self.add_spi_flash(mode="1x", module=M25PX32(Codes.READ_1_1_1), with_master=False)
 
         # Add ROM linker region --------------------------------------------------------------------
         self.bus.add_region("rom", SoCRegion(
-            origin = self.mem_map["spiflash"] + bios_flash_offset,
+            origin = self.bus.regions["spiflash"].origin + bios_flash_offset,
             size   = 32*kB,
             linker = True)
         )
+        self.cpu.set_reset_address(self.bus.regions["rom"].origin)
 
         # Leds -------------------------------------------------------------------------------------
         self.submodules.leds = LedChaser(
@@ -114,17 +111,15 @@ class BaseSoC(SoCCore):
 
 def main():
     parser = argparse.ArgumentParser(description="LiteX SoC on Beaglewire")
-    parser.add_argument("--build",             action="store_true", help="Build bitstream")
-    parser.add_argument("--bios-flash-offset", default=0x60000,     help="BIOS offset in SPI Flash (default: 0x60000)")
-    parser.add_argument("--sys-clk-freq",      default=50e6,        help="System clock frequency (default: 50MHz)")
-    parser.add_argument("--output_dir",        default="build",         help="Output directory of csr")
-    parser.add_argument("--csr_csv",           default="build/csr.csv", help="csr.csv")
+    parser.add_argument("--build",             action="store_true", help="Build bitstream.")
+    parser.add_argument("--bios-flash-offset", default="0x60000",   help="BIOS offset in SPI Flash.")
+    parser.add_argument("--sys-clk-freq",      default=50e6,        help="System clock frequency.")
     builder_args(parser)
     soc_core_args(parser)
     args = parser.parse_args()
 
     soc = BaseSoC(
-         bios_flash_offset = args.bios_flash_offset,
+         bios_flash_offset = int(args.bios_flash_offset, 0),
          sys_clk_freq      = int(float(args.sys_clk_freq)),
          **soc_core_argdict(args)
     )

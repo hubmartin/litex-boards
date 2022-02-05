@@ -60,19 +60,16 @@ class _CRG(Module):
 # BaseSoC ------------------------------------------------------------------------------------------
 
 class BaseSoC(SoCCore):
-    mem_map = {**SoCCore.mem_map, **{"spiflash": 0x80000000}}
     def __init__(self, bios_flash_offset=0x0000, sys_clk_freq=int(25e6), sdram_rate="1:1",
                  with_led_chaser=True, **kwargs):
         platform = tec0117.Platform()
 
-        # Put BIOS in SPIFlash to save BlockRAMs.
+        # Disable Integrated ROM.
         kwargs["integrated_rom_size"] = 0
-        kwargs["cpu_reset_address"]   = self.mem_map["spiflash"] + bios_flash_offset
 
         # SoCCore ----------------------------------------------------------------------------------
         SoCCore.__init__(self, platform, sys_clk_freq,
-            ident         = "LiteX SoC on TEC0117",
-            ident_version = True,
+            ident = "LiteX SoC on TEC0117",
             **kwargs)
 
         # CRG --------------------------------------------------------------------------------------
@@ -85,10 +82,11 @@ class BaseSoC(SoCCore):
 
         # Add ROM linker region --------------------------------------------------------------------
         self.bus.add_region("rom", SoCRegion(
-            origin = self.mem_map["spiflash"] + bios_flash_offset,
-            size   = 64*kB,
+            origin = self.bus.regions["spiflash"].origin + bios_flash_offset,
+            size   = 32*kB,
             linker = True)
         )
+        self.cpu.set_reset_address(self.bus.regions["rom"].origin)
 
         # SDR SDRAM --------------------------------------------------------------------------------
         if not self.integrated_main_ram_size:
@@ -158,20 +156,20 @@ def flash(bios_flash_offset):
 
 def main():
     parser = argparse.ArgumentParser(description="LiteX SoC on TEC0117")
-    parser.add_argument("--build",             action="store_true", help="Build bitstream")
-    parser.add_argument("--load",              action="store_true", help="Load bitstream")
-    parser.add_argument("--bios-flash-offset", default=0x0000,      help="BIOS offset in SPI Flash (0x00000 default)")
-    parser.add_argument("--flash",             action="store_true", help="Flash Bitstream and BIOS")
-    parser.add_argument("--sys-clk-freq",      default=25e6,        help="System clock frequency (default: 25MHz)")
+    parser.add_argument("--build",             action="store_true", help="Build bitstream.")
+    parser.add_argument("--load",              action="store_true", help="Load bitstream.")
+    parser.add_argument("--bios-flash-offset", default="0x0000",    help="BIOS offset in SPI Flash.")
+    parser.add_argument("--flash",             action="store_true", help="Flash Bitstream and BIOS.")
+    parser.add_argument("--sys-clk-freq",      default=25e6,        help="System clock frequency.")
     sdopts = parser.add_mutually_exclusive_group()
-    sdopts.add_argument("--with-spi-sdcard",     action="store_true", help="Enable SPI-mode SDCard support")
-    sdopts.add_argument("--with-sdcard",         action="store_true", help="Enable SDCard support")
+    sdopts.add_argument("--with-spi-sdcard",     action="store_true", help="Enable SPI-mode SDCard support.")
+    sdopts.add_argument("--with-sdcard",         action="store_true", help="Enable SDCard support.")
     builder_args(parser)
     soc_core_args(parser)
     args = parser.parse_args()
 
     soc = BaseSoC(
-        bios_flash_offset = args.bios_flash_offset,
+        bios_flash_offset = int(args.bios_flash_offset, 0),
         sys_clk_freq      = int(float(args.sys_clk_freq)),
         **soc_core_argdict(args)
     )
@@ -191,7 +189,7 @@ def main():
     if args.flash:
         prog = soc.platform.create_programmer()
         prog.flash(0, os.path.join(builder.gateware_dir, "impl", "pnr", "project.fs"))
-        flash(args.bios_flash_offset)
+        flash(int(args.bios_flash_offset, 0))
 
 if __name__ == "__main__":
     main()

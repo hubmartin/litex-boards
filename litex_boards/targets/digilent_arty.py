@@ -5,7 +5,11 @@
 #
 # Copyright (c) 2015-2019 Florent Kermarrec <florent@enjoy-digital.fr>
 # Copyright (c) 2020 Antmicro <www.antmicro.com>
+# Copyright (c) 2022 Victor Suarez Rovere <suarezvictor@gmail.com>
 # SPDX-License-Identifier: BSD-2-Clause
+
+# Note: For now, with --toolchain=yosys+nextpnr, DDR3 should be disabled and sys_clk_freq lowered, ex:
+# python3 -m litex_boards.targets.digilent_arty.py --sys-clk-freq=50e6 --integrated-main-ram-size=8192 --toolchain=yosys+nextpnr --build
 
 import os
 import argparse
@@ -30,47 +34,55 @@ from liteeth.phy.mii import LiteEthPHYMII
 # CRG ----------------------------------------------------------------------------------------------
 
 class _CRG(Module):
-    def __init__(self, platform, sys_clk_freq):
+    def __init__(self, platform, sys_clk_freq, with_dram=True, with_rst=True):
         self.rst = Signal()
         self.clock_domains.cd_sys       = ClockDomain()
-        self.clock_domains.cd_sys4x     = ClockDomain(reset_less=True)
-        self.clock_domains.cd_sys4x_dqs = ClockDomain(reset_less=True)
-        self.clock_domains.cd_idelay    = ClockDomain()
         self.clock_domains.cd_eth       = ClockDomain()
+        if with_dram:
+            self.clock_domains.cd_sys4x     = ClockDomain(reset_less=True)
+            self.clock_domains.cd_sys4x_dqs = ClockDomain(reset_less=True)
+            self.clock_domains.cd_idelay    = ClockDomain()
+
 
         # # #
 
+        # Clk/Rst.
+        clk100 = platform.request("clk100")
+        rst    = ~platform.request("cpu_reset") if with_rst else 0
+
+        # PLL.
         self.submodules.pll = pll = S7PLL(speedgrade=-1)
-        self.comb += pll.reset.eq(~platform.request("cpu_reset") | self.rst)
-        pll.register_clkin(platform.request("clk100"), 100e6)
-        pll.create_clkout(self.cd_sys,       sys_clk_freq)
-        pll.create_clkout(self.cd_sys4x,     4*sys_clk_freq)
-        pll.create_clkout(self.cd_sys4x_dqs, 4*sys_clk_freq, phase=90)
-        pll.create_clkout(self.cd_idelay,    200e6)
-        pll.create_clkout(self.cd_eth,       25e6)
-        platform.add_false_path_constraints(self.cd_sys.clk, pll.clkin) # Ignore sys_clk to pll.clkin path created by SoC's rst.
-
-        self.submodules.idelayctrl = S7IDELAYCTRL(self.cd_idelay)
-
+        self.comb += pll.reset.eq(rst | self.rst)
+        pll.register_clkin(clk100, 100e6)
+        pll.create_clkout(self.cd_sys, sys_clk_freq)
+        pll.create_clkout(self.cd_eth, 25e6)
         self.comb += platform.request("eth_ref_clk").eq(self.cd_eth.clk)
+        platform.add_false_path_constraints(self.cd_sys.clk, pll.clkin) # Ignore sys_clk to pll.clkin path created by SoC's rst.
+        if with_dram:
+            pll.create_clkout(self.cd_sys4x,     4*sys_clk_freq)
+            pll.create_clkout(self.cd_sys4x_dqs, 4*sys_clk_freq, phase=90)
+            pll.create_clkout(self.cd_idelay,    200e6)
+
+        # IdelayCtrl.
+        if with_dram:
+            self.submodules.idelayctrl = S7IDELAYCTRL(self.cd_idelay)
 
 # BaseSoC ------------------------------------------------------------------------------------------
 
 class BaseSoC(SoCCore):
     def __init__(self, variant="a7-35", toolchain="vivado", sys_clk_freq=int(100e6),
                  with_ethernet=False, with_etherbone=False, eth_ip="192.168.1.50",
-                 eth_dynamic_ip=False, ident_version=True, with_led_chaser=True, with_jtagbone=True,
+                 eth_dynamic_ip=False, with_led_chaser=True, with_jtagbone=True,
                  with_spi_flash=False, with_pmod_gpio=False, **kwargs):
         platform = arty.Platform(variant=variant, toolchain=toolchain)
 
         # SoCCore ----------------------------------------------------------------------------------
         SoCCore.__init__(self, platform, sys_clk_freq,
-            ident          = "LiteX SoC on Arty A7",
-            ident_version  = ident_version,
+            ident = "LiteX SoC on Arty A7",
             **kwargs)
 
         # CRG --------------------------------------------------------------------------------------
-        self.submodules.crg = _CRG(platform, sys_clk_freq)
+        self.submodules.crg = _CRG(platform, sys_clk_freq, with_dram=not self.integrated_main_ram_size)
 
         # DDR3 SDRAM -------------------------------------------------------------------------------
         if not self.integrated_main_ram_size:
@@ -119,24 +131,23 @@ class BaseSoC(SoCCore):
 
 def main():
     parser = argparse.ArgumentParser(description="LiteX SoC on Arty A7")
-    parser.add_argument("--toolchain",           default="vivado",                 help="Toolchain use to build (default: vivado)")
-    parser.add_argument("--build",               action="store_true",              help="Build bitstream")
-    parser.add_argument("--load",                action="store_true",              help="Load bitstream")
-    parser.add_argument("--variant",             default="a7-35",                  help="Board variant: a7-35 (default) or a7-100")
-    parser.add_argument("--sys-clk-freq",        default=100e6,                    help="System clock frequency (default: 100MHz)")
+    parser.add_argument("--toolchain",           default="vivado",                 help="FPGA toolchain (vivado, symbiflow or yosys+nextpnr).")
+    parser.add_argument("--build",               action="store_true",              help="Build bitstream.")
+    parser.add_argument("--load",                action="store_true",              help="Load bitstream.")
+    parser.add_argument("--variant",             default="a7-35",                  help="Board variant (a7-35 or a7-100).")
+    parser.add_argument("--sys-clk-freq",        default=100e6,                    help="System clock frequency.")
     ethopts = parser.add_mutually_exclusive_group()
-    ethopts.add_argument("--with-ethernet",      action="store_true",              help="Enable Ethernet support")
-    ethopts.add_argument("--with-etherbone",     action="store_true",              help="Enable Etherbone support")
-    parser.add_argument("--eth-ip",              default="192.168.1.50", type=str, help="Ethernet/Etherbone IP address")
-    parser.add_argument("--eth-dynamic-ip",      action="store_true",              help="Enable dynamic Ethernet IP addresses setting")
+    ethopts.add_argument("--with-ethernet",      action="store_true",              help="Enable Ethernet support.")
+    ethopts.add_argument("--with-etherbone",     action="store_true",              help="Enable Etherbone support.")
+    parser.add_argument("--eth-ip",              default="192.168.1.50", type=str, help="Ethernet/Etherbone IP address.")
+    parser.add_argument("--eth-dynamic-ip",      action="store_true",              help="Enable dynamic Ethernet IP addresses setting.")
     sdopts = parser.add_mutually_exclusive_group()
-    sdopts.add_argument("--with-spi-sdcard",     action="store_true",              help="Enable SPI-mode SDCard support")
-    sdopts.add_argument("--with-sdcard",         action="store_true",              help="Enable SDCard support")
-    parser.add_argument("--sdcard-adapter",      type=str,                         help="SDCard PMOD adapter: digilent (default) or numato")
-    parser.add_argument("--no-ident-version",    action="store_false",             help="Disable build time output")
-    parser.add_argument("--with-jtagbone",       action="store_true",              help="Enable Jtagbone support")
-    parser.add_argument("--with-spi-flash",      action="store_true",              help="Enable SPI Flash (MMAPed)")
-    parser.add_argument("--with-pmod-gpio",      action="store_true",              help="Enable GPIOs through PMOD") # FIXME: Temporary test.
+    sdopts.add_argument("--with-spi-sdcard",     action="store_true",              help="Enable SPI-mode SDCard support.")
+    sdopts.add_argument("--with-sdcard",         action="store_true",              help="Enable SDCard support.")
+    parser.add_argument("--sdcard-adapter",      type=str,                         help="SDCard PMOD adapter (digilent or numato).")
+    parser.add_argument("--with-jtagbone",       action="store_true",              help="Enable JTAGbone support.")
+    parser.add_argument("--with-spi-flash",      action="store_true",              help="Enable SPI Flash (MMAPed).")
+    parser.add_argument("--with-pmod-gpio",      action="store_true",              help="Enable GPIOs through PMOD.") # FIXME: Temporary test.
     builder_args(parser)
     soc_core_args(parser)
     vivado_build_args(parser)
@@ -152,7 +163,6 @@ def main():
         with_etherbone = args.with_etherbone,
         eth_ip         = args.eth_ip,
         eth_dynamic_ip = args.eth_dynamic_ip,
-        ident_version  = args.no_ident_version,
         with_jtagbone  = args.with_jtagbone,
         with_spi_flash = args.with_spi_flash,
         with_pmod_gpio = args.with_pmod_gpio,

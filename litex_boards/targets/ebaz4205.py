@@ -50,8 +50,7 @@ class BaseSoC(SoCCore):
 
         # SoCCore ----------------------------------------------------------------------------------
         SoCCore.__init__(self, platform, sys_clk_freq,
-            ident          = "EBAZ4205 'Development' Board",
-            ident_version  = True,
+            ident = "EBAZ4205 'Development' Board",
             **kwargs)
 
         # Zynq7000 Integration ---------------------------------------------------------------------
@@ -71,9 +70,9 @@ class BaseSoC(SoCCore):
 
 def main():
     parser = argparse.ArgumentParser(description="LiteX SoC on EBAZ4205")
-    parser.add_argument("--build",        action="store_true", help="Build bitstream")
-    parser.add_argument("--load",         action="store_true", help="Load bitstream")
-    parser.add_argument("--sys-clk-freq", default=100e6,       help="System clock frequency (default: 100MHz)")
+    parser.add_argument("--build",        action="store_true", help="Build bitstream.")
+    parser.add_argument("--load",         action="store_true", help="Load bitstream.")
+    parser.add_argument("--sys-clk-freq", default=100e6,       help="System clock frequency.")
     builder_args(parser)
     soc_core_args(parser)
     vivado_build_args(parser)

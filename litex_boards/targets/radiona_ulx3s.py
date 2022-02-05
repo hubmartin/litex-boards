@@ -98,8 +98,7 @@ class BaseSoC(SoCCore):
 
         # SoCCore ----------------------------------------------------------------------------------
         SoCCore.__init__(self, platform, sys_clk_freq,
-            ident          = "LiteX SoC on ULX3S",
-            ident_version  = True,
+            ident = "LiteX SoC on ULX3S",
             **kwargs)
 
         # CRG --------------------------------------------------------------------------------------
@@ -112,11 +111,10 @@ class BaseSoC(SoCCore):
             sdrphy_cls = HalfRateGENSDRPHY if sdram_rate == "1:2" else GENSDRPHY
             self.submodules.sdrphy = sdrphy_cls(platform.request("sdram"), sys_clk_freq)
             self.add_sdram("sdram",
-                phy              = self.sdrphy,
-                module           = getattr(litedram_modules, sdram_module_cls)(sys_clk_freq, sdram_rate),
-                size             = 0x40000000,
-                l2_cache_size    = kwargs.get("l2_size", 8192),
-                l2_cache_reverse = False
+                phy           = self.sdrphy,
+                module        = getattr(litedram_modules, sdram_module_cls)(sys_clk_freq, sdram_rate),
+                size          = 0x40000000,
+                l2_cache_size = kwargs.get("l2_size", 8192)
             )
 
         # Video ------------------------------------------------------------------------------------
@@ -151,22 +149,22 @@ class BaseSoC(SoCCore):
 
 def main():
     parser = argparse.ArgumentParser(description="LiteX SoC on ULX3S")
-    parser.add_argument("--build",           action="store_true",   help="Build bitstream")
-    parser.add_argument("--load",            action="store_true",   help="Load bitstream")
-    parser.add_argument("--toolchain",       default="trellis",     help="FPGA toolchain: trellis (default) or diamond")
-    parser.add_argument("--device",          default="LFE5U-45F",   help="FPGA device: LFE5U-12F, LFE5U-25F, LFE5U-45F (default)  or LFE5U-85F")
-    parser.add_argument("--revision",        default="2.0",         help="Board revision: 2.0 (default) or 1.7")
-    parser.add_argument("--sys-clk-freq",    default=50e6,          help="System clock frequency  (default: 50MHz)")
-    parser.add_argument("--sdram-module",    default="MT48LC16M16", help="SDRAM module: MT48LC16M16 (default), AS4C32M16 or AS4C16M16")
-    parser.add_argument("--with-spi-flash",  action="store_true",   help="Enable SPI Flash (MMAPed)")
+    parser.add_argument("--build",           action="store_true",   help="Build bitstream.")
+    parser.add_argument("--load",            action="store_true",   help="Load bitstream.")
+    parser.add_argument("--toolchain",       default="trellis",     help="FPGA toolchain (trellis or diamond).")
+    parser.add_argument("--device",          default="LFE5U-45F",   help="FPGA device (LFE5U-12F, LFE5U-25F, LFE5U-45F or LFE5U-85F).")
+    parser.add_argument("--revision",        default="2.0",         help="Board revision (2.0 or 1.7).")
+    parser.add_argument("--sys-clk-freq",    default=50e6,          help="System clock frequency.")
+    parser.add_argument("--sdram-module",    default="MT48LC16M16", help="SDRAM module (MT48LC16M16, AS4C32M16 or AS4C16M16).")
+    parser.add_argument("--with-spi-flash",  action="store_true",   help="Enable SPI Flash (MMAPed).")
     sdopts = parser.add_mutually_exclusive_group()
-    sdopts.add_argument("--with-spi-sdcard", action="store_true",   help="Enable SPI-mode SDCard support")
-    sdopts.add_argument("--with-sdcard",     action="store_true",   help="Enable SDCard support")
-    parser.add_argument("--with-oled",       action="store_true",   help="Enable SDD1331 OLED support")
-    parser.add_argument("--sdram-rate",      default="1:1",         help="SDRAM Rate: 1:1 Full Rate (default), 1:2 Half Rate")
+    sdopts.add_argument("--with-spi-sdcard", action="store_true",   help="Enable SPI-mode SDCard support.")
+    sdopts.add_argument("--with-sdcard",     action="store_true",   help="Enable SDCard support.")
+    parser.add_argument("--with-oled",       action="store_true",   help="Enable SDD1331 OLED support.")
+    parser.add_argument("--sdram-rate",      default="1:1",         help="SDRAM Rate (1:1 Full Rate or 1:2 Half Rate).")
     viopts = parser.add_mutually_exclusive_group()
-    viopts.add_argument("--with-video-terminal",    action="store_true", help="Enable Video Terminal (HDMI)")
-    viopts.add_argument("--with-video-framebuffer", action="store_true", help="Enable Video Framebuffer (HDMI)")
+    viopts.add_argument("--with-video-terminal",    action="store_true", help="Enable Video Terminal (HDMI).")
+    viopts.add_argument("--with-video-framebuffer", action="store_true", help="Enable Video Framebuffer (HDMI).")
     builder_args(parser)
     soc_core_args(parser)
     trellis_args(parser)

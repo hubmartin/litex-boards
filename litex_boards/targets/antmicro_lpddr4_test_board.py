@@ -51,13 +51,12 @@ class BaseSoC(SoCCore):
     def __init__(self, *, sys_clk_freq=int(50e6), iodelay_clk_freq=200e6,
             with_ethernet=False, with_etherbone=False, eth_ip="192.168.1.50", eth_dynamic_ip=False,
             with_hyperram=False, with_sdcard=False, with_jtagbone=True, with_uartbone=False,
-            with_led_chaser=True, ident_version=True, **kwargs):
+            with_led_chaser=True, **kwargs):
         platform = lpddr4_test_board.Platform()
 
         # SoCCore ----------------------------------------------------------------------------------
         SoCCore.__init__(self, platform, sys_clk_freq,
-            ident         = "LiteX SoC on LPDDR4 Test Board",
-            ident_version = ident_version,
+            ident = "LiteX SoC on LPDDR4 Test Board",
             **kwargs)
 
         # CRG --------------------------------------------------------------------------------------
@@ -119,21 +118,20 @@ class BaseSoC(SoCCore):
 def main():
     parser = argparse.ArgumentParser(description="LiteX SoC on LPDDR4 Test Board")
     target = parser.add_argument_group(title="Target options")
-    target.add_argument("--build",            action="store_true",    help="Build bitstream")
-    target.add_argument("--load",             action="store_true",    help="Load bitstream")
-    target.add_argument("--flash",            action="store_true",    help="Flash bitstream")
-    target.add_argument("--sys-clk-freq",     default=50e6,           help="System clock frequency")
-    target.add_argument("--iodelay-clk-freq", default=200e6,          help="IODELAYCTRL frequency")
+    target.add_argument("--build",            action="store_true",    help="Build bitstream.")
+    target.add_argument("--load",             action="store_true",    help="Load bitstream.")
+    target.add_argument("--flash",            action="store_true",    help="Flash bitstream.")
+    target.add_argument("--sys-clk-freq",     default=50e6,           help="System clock frequency.")
+    target.add_argument("--iodelay-clk-freq", default=200e6,          help="IODELAYCTRL frequency.")
     ethopts = target.add_mutually_exclusive_group()
-    ethopts.add_argument("--with-ethernet",   action="store_true",    help="Add Ethernet")
-    ethopts.add_argument("--with-etherbone",  action="store_true",    help="Add EtherBone")
-    target.add_argument("--eth-ip",           default="192.168.1.50", help="Ethernet/Etherbone IP address")
-    target.add_argument("--eth-dynamic-ip",   action="store_true",    help="Enable dynamic Ethernet IP addresses setting")
-    target.add_argument("--with-hyperram",    action="store_true",    help="Add HyperRAM")
-    target.add_argument("--with-sdcard",      action="store_true",    help="Add SDCard")
-    target.add_argument("--with-jtagbone",    action="store_true",    help="Add JTAGBone")
-    target.add_argument("--with-uartbone",    action="store_true",    help="Add UartBone on 2nd serial")
-    parser.add_argument("--no-ident-version", action="store_false",   help="Disable build time output")
+    ethopts.add_argument("--with-ethernet",   action="store_true",    help="Add Ethernet.")
+    ethopts.add_argument("--with-etherbone",  action="store_true",    help="Add EtherBone.")
+    target.add_argument("--eth-ip",           default="192.168.1.50", help="Ethernet/Etherbone IP address.")
+    target.add_argument("--eth-dynamic-ip",   action="store_true",    help="Enable dynamic Ethernet IP addresses setting.")
+    target.add_argument("--with-hyperram",    action="store_true",    help="Add HyperRAM.")
+    target.add_argument("--with-sdcard",      action="store_true",    help="Add SDCard.")
+    target.add_argument("--with-jtagbone",    action="store_true",    help="Add JTAGBone.")
+    target.add_argument("--with-uartbone",    action="store_true",    help="Add UartBone on 2nd serial.")
     builder_args(parser)
     soc_core_args(parser)
     vivado_build_args(parser)
@@ -152,7 +150,6 @@ def main():
         with_sdcard       = args.with_sdcard,
         with_jtagbone     = args.with_jtagbone,
         with_uartbone     = args.with_uartbone,
-        ident_version     = args.no_ident_version,
         **soc_core_argdict(args))
     builder = Builder(soc, **builder_argdict(args))
     vns = builder.build(**vivado_build_argdict(args), run=args.build)

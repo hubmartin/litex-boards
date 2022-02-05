@@ -28,8 +28,7 @@ class BaseSoC(SoCCore):
 
         # SoCCore ----------------------------------------------------------------------------------
         SoCCore.__init__(self, platform, sys_clk_freq,
-            ident          = "LiteX Simple SoC",
-            ident_version  = True,
+            ident = "LiteX Simple SoC",
             **kwargs)
 
         # CRG --------------------------------------------------------------------------------------
@@ -48,10 +47,10 @@ class BaseSoC(SoCCore):
 
 def main():
     parser = argparse.ArgumentParser(description="Generic LiteX SoC")
-    parser.add_argument("platform",                             help="Module name of the platform to build for")
-    parser.add_argument("--build",         action="store_true", help="Build bitstream")
-    parser.add_argument("--load",          action="store_true", help="Load bitstream")
-    parser.add_argument("--toolchain",     default=None,        help="FPGA toolchain (None default)")
+    parser.add_argument("platform",                             help="Module name of the platform to build for.")
+    parser.add_argument("--build",         action="store_true", help="Build bitstream.")
+    parser.add_argument("--load",          action="store_true", help="Load bitstream.")
+    parser.add_argument("--toolchain",     default=None,        help="FPGA toolchain.")
     builder_args(parser)
     soc_core_args(parser)
     args = parser.parse_args()

@@ -101,8 +101,7 @@ class BaseSoC(SoCCore):
 
         # SoCCore ----------------------------------------------------------------------------------
         SoCCore.__init__(self, platform, sys_clk_freq,
-            ident          = "LiteX SoC on Alchitry Mojo",
-            ident_version  = True,
+            ident = "LiteX SoC on Alchitry Mojo",
             **kwargs)
 
         # CRG --------------------------------------------------------------------------------------
@@ -149,16 +148,16 @@ class BaseSoC(SoCCore):
 
 def main():
     parser = argparse.ArgumentParser(description="LiteX SoC on Alchitry Mojo")
-    parser.add_argument("--build",                  action="store_true", help="Build bitstream")
-    parser.add_argument("--sys-clk-freq",           default=62.5e6,      help="System clock frequency (default: 62.5 MHz)")
-    parser.add_argument("--sdram-rate",             default="1:1",       help="SDRAM Rate: 1:1 Full Rate (default), 1:2 Half Rate")
+    parser.add_argument("--build",                  action="store_true", help="Build bitstream.")
+    parser.add_argument("--sys-clk-freq",           default=62.5e6,      help="System clock frequency.")
+    parser.add_argument("--sdram-rate",             default="1:1",       help="SDRAM Rate: (1:1 Full Rate or 1:2 Half Rate).")
     shields1 = parser.add_mutually_exclusive_group()
-    shields1.add_argument("--with-hdmi-shield",     action="store_true", help="Enable HDMI Shield")
-    shields1.add_argument("--with-sdram-shield",    action="store_true", help="Enable SDRAM Shield")
+    shields1.add_argument("--with-hdmi-shield",     action="store_true", help="Enable HDMI Shield.")
+    shields1.add_argument("--with-sdram-shield",    action="store_true", help="Enable SDRAM Shield.")
     viopts = parser.add_mutually_exclusive_group()
-    viopts.add_argument("--with-video-terminal",    action="store_true", help="Enable Video Terminal (HDMI)")
-    viopts.add_argument("--with-video-framebuffer", action="store_true", help="Enable Video Framebuffer (HDMI)")
-    viopts.add_argument("--with-video-colorbars",   action="store_true", help="Enable Video Colorbars (HDMI)")
+    viopts.add_argument("--with-video-terminal",    action="store_true", help="Enable Video Terminal (HDMI).")
+    viopts.add_argument("--with-video-framebuffer", action="store_true", help="Enable Video Framebuffer (HDMI).")
+    viopts.add_argument("--with-video-colorbars",   action="store_true", help="Enable Video Colorbars (HDMI).")
 
     builder_args(parser)
     soc_core_args(parser)
@@ -174,7 +173,6 @@ def main():
         with_video_terminal    = args.with_video_terminal,
         with_video_framebuffer = args.with_video_framebuffer,
         with_video_colorbars   = args.with_video_colorbars,
-        uart_baudrate          = 500000,
         **soc_core_argdict(args)
     )
 

@@ -51,8 +51,7 @@ class BaseSoC(SoCCore):
 
         # SoCCore ----------------------------------------------------------------------------------
         SoCCore.__init__(self, platform, sys_clk_freq,
-            ident          = "LiteX SoC on KX2",
-            ident_version  = True,
+            ident = "LiteX SoC on KX2",
             **kwargs)
 
         # CRG --------------------------------------------------------------------------------------
@@ -80,9 +79,9 @@ class BaseSoC(SoCCore):
 
 def main():
     parser = argparse.ArgumentParser(description="LiteX SoC on KX2")
-    parser.add_argument("--build",        action="store_true", help="Build bitstream")
-    parser.add_argument("--load",         action="store_true", help="Load bitstream")
-    parser.add_argument("--sys-clk-freq", default=100e6,       help="System clock frequency (default: 125MHz)")
+    parser.add_argument("--build",        action="store_true", help="Build bitstream.")
+    parser.add_argument("--load",         action="store_true", help="Load bitstream.")
+    parser.add_argument("--sys-clk-freq", default=100e6,       help="System clock frequency.")
     builder_args(parser)
     soc_core_args(parser)
     args = parser.parse_args()

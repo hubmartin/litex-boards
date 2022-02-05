@@ -67,20 +67,17 @@ class BaseSoC(SoCCore):
     def __init__(self, sys_clk_freq=int(27e6), with_hyperram=False, with_led_chaser=True, with_video_terminal=True, **kwargs):
         platform = tang_nano_4k.Platform()
 
-        if 'cpu_type' in kwargs and kwargs['cpu_type'] == 'gowin_emcu':
-            kwargs['with_uart'] = False  # CPU has own UART
-            kwargs['integrated_sram_size'] = 0  # SRAM is directly attached to CPU
-            kwargs["integrated_rom_size"] = 0  # boot flash directly attached to CPU
+        if "cpu_type" in kwargs and kwargs["cpu_type"] == "gowin_emcu":
+            kwargs["with_uart"]            = False # CPU has own UART
+            kwargs["integrated_sram_size"] = 0     # SRAM is directly attached to CPU
+            kwargs["integrated_rom_size"]  = 0     # boot flash directly attached to CPU
         else:
-            # Put BIOS in SPIFlash to save BlockRAMs.
-            self.mem_map = {**SoCCore.mem_map, **{"spiflash": 0x80000000}}
+            # Disable Integrated ROM
             kwargs["integrated_rom_size"] = 0
-            kwargs["cpu_reset_address"]   = self.mem_map["spiflash"] + 0
 
         # SoCCore ----------------------------------------------------------------------------------
         SoCCore.__init__(self, platform, sys_clk_freq,
-            ident         = "LiteX SoC on Tang Nano 4K",
-            ident_version = True,
+            ident = "LiteX SoC on Tang Nano 4K",
             **kwargs)
 
         if self.cpu_type == 'vexriscv':
@@ -89,20 +86,29 @@ class BaseSoC(SoCCore):
         # CRG --------------------------------------------------------------------------------------
         self.submodules.crg = _CRG(platform, sys_clk_freq, with_video_pll=with_video_terminal)
 
-        # SPI Flash --------------------------------------------------------------------------------
-        from litespi.modules import W25Q32
-        from litespi.opcodes import SpiNorFlashOpCodes as Codes
-        self.add_spi_flash(mode="1x", module=W25Q32(Codes.READ_1_1_1), with_master=False)
-
-        if self.cpu_type == 'gowin_emcu':
-            self.cpu.connect_uart(platform.request('serial'))
-        else:
-        # Add ROM linker region --------------------------------------------------------------------
+        if self.cpu_type == "gowin_emcu":
+            self.cpu.connect_uart(platform.request("serial"))
+            self.bus.add_region("sram", SoCRegion(
+                origin=self.cpu.mem_map["sram"],
+                size=16 * kB)
+            )
             self.bus.add_region("rom", SoCRegion(
-                origin = self.mem_map["spiflash"] + 0,
-                size   = 64*kB,
+                origin=self.cpu.mem_map["rom"],
+                size=32 * kB,
+                linker=True)
+            )
+        else:
+            # SPI Flash --------------------------------------------------------------------------------
+            from litespi.modules import W25Q32
+            from litespi.opcodes import SpiNorFlashOpCodes as Codes
+            self.add_spi_flash(mode="1x", module=W25Q32(Codes.READ_1_1_1), with_master=False)
+            # Add ROM linker region --------------------------------------------------------------------
+            self.bus.add_region("rom", SoCRegion(
+                origin = self.bus.regions["spiflash"].origin,
+                size   = 32*kB,
                 linker = True)
             )
+            self.cpu.set_reset_address(self.bus.regions["rom"].origin)
 
         # HyperRAM ---------------------------------------------------------------------------------
         if with_hyperram:
@@ -118,7 +124,7 @@ class BaseSoC(SoCCore):
             self.comb += platform.request("O_hpram_ck").eq(hyperram_pads.clk)
             self.comb += platform.request("O_hpram_ck_n").eq(~hyperram_pads.clk)
             self.submodules.hyperram = HyperRAM(hyperram_pads)
-            self.bus.add_slave("main_ram", slave=self.hyperram.bus, region=SoCRegion(origin=0x40000000, size=8*1024*1024))
+            self.bus.add_slave("main_ram", slave=self.hyperram.bus, region=SoCRegion(origin=0x40000000, size=8*mB))
 
         # Video ------------------------------------------------------------------------------------
         if with_video_terminal:
@@ -136,17 +142,13 @@ class BaseSoC(SoCCore):
 
 def main():
     parser = argparse.ArgumentParser(description="LiteX SoC on Tang Nano 4K")
-    parser.add_argument("--build",       action="store_true", help="Build bitstream")
-    parser.add_argument("--load",        action="store_true", help="Load bitstream")
-    parser.add_argument("--flash",       action="store_true", help="Flash Bitstream")
-    parser.add_argument("--sys-clk-freq",default=27e6,        help="System clock frequency (default: 27MHz)")
+    parser.add_argument("--build",       action="store_true", help="Build bitstream.")
+    parser.add_argument("--load",        action="store_true", help="Load bitstream.")
+    parser.add_argument("--flash",       action="store_true", help="Flash Bitstream.")
+    parser.add_argument("--sys-clk-freq",default=27e6,        help="System clock frequency.")
     builder_args(parser)
     soc_core_args(parser)
     args = parser.parse_args()
-
-    if args.cpu_type == 'gowin_emcu':
-        # FIXME: ARM software not supported yet
-        args.no_compile_software = True
 
     soc = BaseSoC(
         sys_clk_freq=int(float(args.sys_clk_freq)),
@@ -163,7 +165,8 @@ def main():
     if args.flash:
         prog = soc.platform.create_programmer()
         prog.flash(0, os.path.join(builder.gateware_dir, "impl", "pnr", "project.fs"))
-        prog.flash(0, "build/sipeed_tang_nano_4k/software/bios/bios.bin", external=True)
+        prog.flash(0, os.path.join(builder.software_dir, "bios", "bios.bin"), external=True)
+
 
 if __name__ == "__main__":
     main()

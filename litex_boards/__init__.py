@@ -7,6 +7,7 @@ import importlib
 
 vendors = [
     "1bitsquared",
+    "alinx",
     "antmicro",
     "berkeleylab",
     "colorlight",
@@ -18,6 +19,7 @@ vendors = [
     "fairwaves",
     "hackaday",
     "kosagi",
+    "krtkl",
     "lattice",
     "lambdaconcept",
     "linsn",
@@ -33,6 +35,7 @@ vendors = [
     "scarabhardware",
     "siglent",
     "sipeed",
+    "seeedstudio",
     "sqrl",
     "terasic",
     "trenz",

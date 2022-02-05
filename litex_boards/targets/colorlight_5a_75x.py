@@ -134,12 +134,11 @@ class BaseSoC(SoCCore):
 
         # SoCCore ----------------------------------------------------------------------------------
         SoCCore.__init__(self, platform, int(sys_clk_freq),
-            ident          = "LiteX SoC on Colorlight " + board.upper(),
-            ident_version  = True,
+            ident = "LiteX SoC on Colorlight " + board.upper(),
             **kwargs)
 
         # CRG --------------------------------------------------------------------------------------
-        with_rst = kwargs["uart_name"] not in ["serial", "bridge"] # serial_rx shared with user_btn_n.
+        with_rst = kwargs["uart_name"] not in ["serial", "crossover"] # serial_rx shared with user_btn_n.
         with_usb_pll = kwargs.get("uart_name", None) == "usb_acm"
         self.submodules.crg = _CRG(platform, sys_clk_freq, use_internal_osc=use_internal_osc, with_usb_pll=with_usb_pll,with_rst=with_rst, sdram_rate=sdram_rate)
 
@@ -181,18 +180,18 @@ class BaseSoC(SoCCore):
 
 def main():
     parser = argparse.ArgumentParser(description="LiteX SoC on Colorlight 5A-75X")
-    parser.add_argument("--build",             action="store_true",              help="Build bitstream")
-    parser.add_argument("--load",              action="store_true",              help="Load bitstream")
-    parser.add_argument("--board",             default="5a-75b",                 help="Board type: 5a-75b (default) or 5a-75e")
-    parser.add_argument("--revision",          default="7.0", type=str,          help="Board revision: 7.0 (default), 6.0 or 6.1")
-    parser.add_argument("--sys-clk-freq",      default=60e6,                     help="System clock frequency (default: 60MHz)")
+    parser.add_argument("--build",             action="store_true",              help="Build bitstream.")
+    parser.add_argument("--load",              action="store_true",              help="Load bitstream.")
+    parser.add_argument("--board",             default="5a-75b",                 help="Board type (5a-75b or 5a-75e).")
+    parser.add_argument("--revision",          default="7.0", type=str,          help="Board revision (6.0, 6.1, 7.0 or 8.0).")
+    parser.add_argument("--sys-clk-freq",      default=60e6,                     help="System clock frequency")
     ethopts = parser.add_mutually_exclusive_group()
-    ethopts.add_argument("--with-ethernet",    action="store_true",              help="Enable Ethernet support")
-    ethopts.add_argument("--with-etherbone",   action="store_true",              help="Enable Etherbone support")
-    parser.add_argument("--eth-ip",            default="192.168.1.50", type=str, help="Ethernet/Etherbone IP address")
-    parser.add_argument("--eth-phy",           default=0, type=int,              help="Ethernet PHY: 0 (default) or 1")
-    parser.add_argument("--use-internal-osc",  action="store_true",              help="Use internal oscillator")
-    parser.add_argument("--sdram-rate",        default="1:1",                    help="SDRAM Rate: 1:1 Full Rate (default), 1:2 Half Rate")
+    ethopts.add_argument("--with-ethernet",    action="store_true",              help="Enable Ethernet support.")
+    ethopts.add_argument("--with-etherbone",   action="store_true",              help="Enable Etherbone support.")
+    parser.add_argument("--eth-ip",            default="192.168.1.50", type=str, help="Ethernet/Etherbone IP address.")
+    parser.add_argument("--eth-phy",           default=0, type=int,              help="Ethernet PHY (0 or 1).")
+    parser.add_argument("--use-internal-osc",  action="store_true",              help="Use internal oscillator.")
+    parser.add_argument("--sdram-rate",        default="1:1",                    help="SDRAM Rate (1:1 Full Rate or 1:2 Half Rate).")
     builder_args(parser)
     soc_core_args(parser)
     trellis_args(parser)

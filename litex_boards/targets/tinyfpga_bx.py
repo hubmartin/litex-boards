@@ -19,7 +19,7 @@ from litex_boards.platforms import tinyfpga_bx
 from litex.soc.integration.soc_core import *
 from litex.soc.integration.soc import SoCRegion
 from litex.soc.integration.builder import *
-from litex.soc.cores.led import LedChaser
+from litex.soc.cores.led import LedChaser, WS2812
 
 kB = 1024
 mB = 1024*kB
@@ -63,6 +63,12 @@ class BaseSoC(SoCCore):
             self.submodules.leds = LedChaser(
                 pads         = platform.request_all("user_led"),
                 sys_clk_freq = sys_clk_freq)
+
+        self.submodules.ws2812 = WS2812(platform.request("ws2812"), nleds=4, sys_clk_freq=sys_clk_freq)
+        self.bus.add_slave(name="ws2812", slave=self.ws2812.bus, region=SoCRegion(
+            origin = 0x2000_0000,
+            size   = 4*4,
+        ))
 
 # Build --------------------------------------------------------------------------------------------
 

@@ -18,6 +18,9 @@ _io = [
     # Leds
     ("user_led", 0, Pins("B3"), IOStandard("LVCMOS33")),
 
+    # ws2812
+    ("ws2812", 0, Pins("B1"), IOStandard("LVCMOS33")),
+
     # USB
     ("usb", 0,
         Subsignal("d_p", Pins("B4")),

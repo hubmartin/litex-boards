@@ -23,6 +23,7 @@ from litex.soc.cores.led import LedChaser, WS2812
 from litedram.modules import MT41J128M16, MT41K64M16
 from litedram.phy import ECP5DDRPHY
 from litex.soc.cores.video import VideoVGAPHY
+from litex.soc.cores.bitbang import I2CMaster
 
 
 # CRG ----------------------------------------------------------------------------------------------
@@ -75,7 +76,12 @@ class _CRG_VERSA(Module):
 
         #VGA
         self.clock_domains.cd_vga   = ClockDomain(reset_less=True)
-        pll.create_clkout(self.cd_vga,  25.175e6) # 40e6)
+        #pll.create_clkout(self.cd_vga,  25.175e6) # 40e6)
+        #pll.create_clkout(self.cd_vga, 40e6) # for terminal "800x600@60Hz"
+        
+        #pll.create_clkout(self.cd_vga, 148.5e6) # for terminal "1920x1080@60Hz"
+        pll.create_clkout(self.cd_vga, 160e6) # for terminal "1920x1080@60Hz"
+       
 
 
 # BaseSoC ------------------------------------------------------------------------------------------
@@ -84,8 +90,8 @@ class BaseSoC(SoCCore):
     #mem_map = {**SoCCore.mem_map, **{"spiflash": 0x1000000}}
     def __init__(self, sys_clk_freq=int(50e6), x5_clk_freq=None, toolchain="trellis",
                  with_led_chaser=True, 
-                 with_video_terminal=False,
-                 with_video_framebuffer=True,**kwargs):
+                 with_video_terminal=True,
+                 with_video_framebuffer=False,**kwargs):
         platform = ecp5_evn.Platform(toolchain=toolchain)
 
         #bios_flash_offset = 0x400000
@@ -97,7 +103,7 @@ class BaseSoC(SoCCore):
         # SoCCore ----------------------------------------------------------------------------------
         SoCCore.__init__(self, platform, sys_clk_freq,
             ident          = "LiteX SoC on ECP5 Evaluation Board",
-            ident_version  = True,
+            #ident_version  = True,
             #integrated_main_ram_size = 0x4000,
             integrated_main_ram_size = 0,
             **kwargs)
@@ -121,9 +127,54 @@ class BaseSoC(SoCCore):
 
         # Video ------------------------------------------------------------------------------------
         if with_video_terminal or with_video_framebuffer:
-            self.submodules.videophy = VideoVGAPHY(platform.request("vga"), clock_domain="vga")
+            pads = platform.request("vga")
+            self.submodules.videophy = VideoVGAPHY(pads, clock_domain="vga")
+            self.submodules.videoi2c = I2CMaster(pads)
+            self.videoi2c.add_init(addr=0x3B, init=[
+                (0xc7, 0x00), # HDMI configuration
+
+                (0xc1, 0x20), # seen in pulseview
+
+                (0x1e, 0x00), # Power up transmitter
+                (0x08, 0x60), # Input Bus/Pixel Repetition (default)
+
+                (0x00, 0x02), # Pixel clock
+                (0x01, 0x3a), # 
+
+                (0x02, 0x70), # Framerate * 100
+                (0x03, 0x17), #             
+
+                (0x04, 0x98), # Pixels horizontal
+                (0x05, 0x08), #  
+
+                (0x06, 0x65), # Pixels vertical
+                (0x07, 0x04), #
+
+                (0x18, 0x9a), # seen in pulseview, some delay before final command?
+                (0x18, 0x9a),
+                (0x18, 0x9a),
+                (0x18, 0x9a),
+                (0x18, 0x9a),
+                (0x18, 0x9a),
+                (0x18, 0x9a),
+                (0x18, 0x9a),
+                (0x18, 0x9a),
+                (0x18, 0x9a),
+
+                (0x18, 0x9a),
+                (0x18, 0x9a),
+                (0x18, 0x9a),
+                (0x18, 0x9a),
+                (0x18, 0x9a),
+                (0x18, 0x9a),
+                (0x18, 0x9a),
+                (0x18, 0x9a),
+
+                (0x1a, 0x00) # end
+
+            ])
             if with_video_terminal:
-                self.add_video_terminal(phy=self.videophy, timings="800x600@60Hz", clock_domain="vga")
+                self.add_video_terminal(phy=self.videophy, timings="1920x1080@60Hz", clock_domain="vga")
             if with_video_framebuffer:
                 #self.add_video_framebuffer(phy=self.videophy, timings="800x600@60Hz", clock_domain="vga")
                 self.add_video_framebuffer(phy=self.videophy, timings="640x480@60Hz", clock_domain="vga")
@@ -164,7 +215,7 @@ def main():
     parser.add_argument("--build",        action="store_true", help="Build bitstream")
     parser.add_argument("--load",         action="store_true", help="Load bitstream")
     parser.add_argument("--toolchain",    default="trellis",   help="FPGA toolchain: trellis (default) or diamond")
-    parser.add_argument("--sys-clk-freq", default=80e6,        help="System clock frequency (default: 60MHz)")
+    parser.add_argument("--sys-clk-freq", default=60e6,        help="System clock frequency (default: 60MHz)")
     parser.add_argument("--x5-clk-freq",  type=int,            help="Use X5 oscillator as system clock at the specified frequency")
     builder_args(parser)
     soc_core_args(parser)

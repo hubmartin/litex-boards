@@ -80,7 +80,10 @@ class _CRG_VERSA(Module):
         #pll.create_clkout(self.cd_vga, 40e6) # for terminal "800x600@60Hz"
         
         #pll.create_clkout(self.cd_vga, 148.5e6) # for terminal "1920x1080@60Hz"
-        pll.create_clkout(self.cd_vga, 160e6) # for terminal "1920x1080@60Hz"
+        #pll.create_clkout(self.cd_vga, 160e6) # for terminal "1920x1080@60Hz"
+        #pll.create_clkout(self.cd_vga, 80e6) # for terminal "1920x1080@30Hz"
+        pll.create_clkout(self.cd_vga, 40e6) # for terminal "800x600@60Hz"
+
        
 
 
@@ -130,51 +133,51 @@ class BaseSoC(SoCCore):
             pads = platform.request("vga")
             self.submodules.videophy = VideoVGAPHY(pads, clock_domain="vga")
             self.submodules.videoi2c = I2CMaster(pads)
+
+            # # 1920x1080@60Hz
+            # pixel_clock_hz = 160e6
+            # framerate_hz = 60
+            # pixels_horizontal = 2200
+            # pixels_vertical = 1125
+
+            # 800x600@60Hz
+            pixel_clock_hz = 40e6
+            framerate_hz = 60
+            pixels_horizontal = 1056
+            pixels_vertical = 628
+
+            # # 1920x1080@30Hz
+            # pixel_clock_hz = 80e6
+            # framerate_hz = 30
+            # pixels_horizontal = 2640
+            # pixels_vertical = 1125
+
             self.videoi2c.add_init(addr=0x3B, init=[
                 (0xc7, 0x00), # HDMI configuration
-
-                (0xc1, 0x20), # seen in pulseview
+                (0xc7, 0x00), # Write twice, the first transfer fails for some reason
 
                 (0x1e, 0x00), # Power up transmitter
                 (0x08, 0x60), # Input Bus/Pixel Repetition (default)
 
-                (0x00, 0x02), # Pixel clock
-                (0x01, 0x3a), # 
+                (0x00, int((pixel_clock_hz/1e4) %256)), # Pixel clock in MHz * 100
+                (0x01, int((pixel_clock_hz/1e4)//256)), # 
 
-                (0x02, 0x70), # Framerate * 100
-                (0x03, 0x17), #             
+                (0x02, int((framerate_hz*100) %256)), # Framerate * 100
+                (0x03, int((framerate_hz*100)//256)), #             
 
-                (0x04, 0x98), # Pixels horizontal
-                (0x05, 0x08), #  
+                (0x04, int((pixels_horizontal) %256)), # Pixels horizontal
+                (0x05, int((pixels_horizontal)//256)), #  
 
-                (0x06, 0x65), # Pixels vertical
-                (0x07, 0x04), #
-
-                (0x18, 0x9a), # seen in pulseview, some delay before final command?
-                (0x18, 0x9a),
-                (0x18, 0x9a),
-                (0x18, 0x9a),
-                (0x18, 0x9a),
-                (0x18, 0x9a),
-                (0x18, 0x9a),
-                (0x18, 0x9a),
-                (0x18, 0x9a),
-                (0x18, 0x9a),
-
-                (0x18, 0x9a),
-                (0x18, 0x9a),
-                (0x18, 0x9a),
-                (0x18, 0x9a),
-                (0x18, 0x9a),
-                (0x18, 0x9a),
-                (0x18, 0x9a),
-                (0x18, 0x9a),
+                (0x06, int((pixels_vertical) %256)), # Pixels vertical
+                (0x07, int((pixels_vertical)//256)), #
 
                 (0x1a, 0x00) # end
 
             ])
             if with_video_terminal:
-                self.add_video_terminal(phy=self.videophy, timings="1920x1080@60Hz", clock_domain="vga")
+                #self.add_video_terminal(phy=self.videophy, timings="1920x1080@60Hz", clock_domain="vga")
+                #self.add_video_terminal(phy=self.videophy, timings="1920x1080@30Hz", clock_domain="vga")
+                self.add_video_terminal(phy=self.videophy, timings="800x600@60Hz", clock_domain="vga")
             if with_video_framebuffer:
                 #self.add_video_framebuffer(phy=self.videophy, timings="800x600@60Hz", clock_domain="vga")
                 self.add_video_framebuffer(phy=self.videophy, timings="640x480@60Hz", clock_domain="vga")

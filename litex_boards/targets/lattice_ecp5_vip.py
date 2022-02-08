@@ -12,7 +12,7 @@ import argparse
 from migen import *
 from migen.genlib.resetsync import AsyncResetSynchronizer
 
-from litex_boards.platforms import ecp5_evn
+from litex_boards.platforms import ecp5_vip
 
 from litex.soc.cores.clock import *
 from litex.soc.integration.soc_core import *
@@ -74,15 +74,15 @@ class _CRG_VERSA(Module):
             AsyncResetSynchronizer(self.cd_sys2x, ~pll.locked | self.reset),
         ]
 
-        #VGA
-        self.clock_domains.cd_vga   = ClockDomain(reset_less=True)
-        #pll.create_clkout(self.cd_vga,  25.175e6) # 40e6)
-        #pll.create_clkout(self.cd_vga, 40e6) # for terminal "800x600@60Hz"
+        # HDMI
+        self.clock_domains.cd_hdmi   = ClockDomain(reset_less=True)
+        #pll.create_clkout(self.cd_hdmi,  25.175e6) # 40e6)
+        #pll.create_clkout(self.cd_hdmi, 40e6) # for terminal "800x600@60Hz"
         
-        #pll.create_clkout(self.cd_vga, 148.5e6) # for terminal "1920x1080@60Hz"
-        #pll.create_clkout(self.cd_vga, 160e6) # for terminal "1920x1080@60Hz"
-        #pll.create_clkout(self.cd_vga, 80e6) # for terminal "1920x1080@30Hz"
-        pll.create_clkout(self.cd_vga, 40e6) # for terminal "800x600@60Hz"
+        #pll.create_clkout(self.cd_hdmi, 148.5e6) # for terminal "1920x1080@60Hz"
+        #pll.create_clkout(self.cd_hdmi, 160e6) # for terminal "1920x1080@60Hz"
+        #pll.create_clkout(self.cd_hdmi, 80e6) # for terminal "1920x1080@30Hz"
+        pll.create_clkout(self.cd_hdmi, 40e6) # for terminal "800x600@60Hz"
 
        
 
@@ -95,7 +95,7 @@ class BaseSoC(SoCCore):
                  with_led_chaser=True, 
                  with_video_terminal=True,
                  with_video_framebuffer=False,**kwargs):
-        platform = ecp5_evn.Platform(toolchain=toolchain)
+        platform = ecp5_vip.Platform(toolchain=toolchain)
 
         #bios_flash_offset = 0x400000
 
@@ -130,8 +130,8 @@ class BaseSoC(SoCCore):
 
         # Video ------------------------------------------------------------------------------------
         if with_video_terminal or with_video_framebuffer:
-            pads = platform.request("vga")
-            self.submodules.videophy = VideoVGAPHY(pads, clock_domain="vga")
+            pads = platform.request("hdmi")
+            self.submodules.videophy = VideoVGAPHY(pads, clock_domain="hdmi")
             self.submodules.videoi2c = I2CMaster(pads)
 
             # # 1920x1080@60Hz
@@ -175,12 +175,12 @@ class BaseSoC(SoCCore):
 
             ])
             if with_video_terminal:
-                #self.add_video_terminal(phy=self.videophy, timings="1920x1080@60Hz", clock_domain="vga")
-                #self.add_video_terminal(phy=self.videophy, timings="1920x1080@30Hz", clock_domain="vga")
-                self.add_video_terminal(phy=self.videophy, timings="800x600@60Hz", clock_domain="vga")
+                #self.add_video_terminal(phy=self.videophy, timings="1920x1080@60Hz", clock_domain="hdmi")
+                #self.add_video_terminal(phy=self.videophy, timings="1920x1080@30Hz", clock_domain="hdmi")
+                self.add_video_terminal(phy=self.videophy, timings="800x600@60Hz", clock_domain="hdmi")
             if with_video_framebuffer:
-                #self.add_video_framebuffer(phy=self.videophy, timings="800x600@60Hz", clock_domain="vga")
-                self.add_video_framebuffer(phy=self.videophy, timings="640x480@60Hz", clock_domain="vga")
+                #self.add_video_framebuffer(phy=self.videophy, timings="800x600@60Hz", clock_domain="hdmi")
+                self.add_video_framebuffer(phy=self.videophy, timings="640x480@60Hz", clock_domain="hdmi")
                 
 
         # Leds -------------------------------------------------------------------------------------
